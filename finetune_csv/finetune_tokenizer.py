@@ -198,7 +198,8 @@ def train_tokenizer(model, device, config, save_dir, logger):
                 end_idx = (j + 1) * (ori_batch_x.shape[0] // accumulation_steps)
                 batch_x = ori_batch_x[start_idx:end_idx]
                 
-                zs, bsq_loss, _, _ = (model.module if use_ddp else model)(batch_x)
+                # Call the DDP wrapper itself (not model.module) so gradients are all-reduced across ranks
+                zs, bsq_loss, _, _ = model(batch_x)
                 z_pre, z = zs
                 
                 recon_loss_pre = F.mse_loss(z_pre, batch_x)

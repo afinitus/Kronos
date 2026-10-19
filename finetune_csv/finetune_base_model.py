@@ -288,7 +288,8 @@ def train_model(model, tokenizer, device, config, save_dir, logger):
             token_in = [token_seq_0[:, :-1], token_seq_1[:, :-1]]
             token_out = [token_seq_0[:, 1:], token_seq_1[:, 1:]]
             
-            logits = (model.module if use_ddp else model)(token_in[0], token_in[1], batch_x_stamp[:, :-1, :])
+            # Call the DDP wrapper itself (not model.module) so gradients are all-reduced across ranks
+            logits = model(token_in[0], token_in[1], batch_x_stamp[:, :-1, :])
             loss, s1_loss, s2_loss = (model.module if use_ddp else model).head.compute_loss(logits[0], logits[1], token_out[0], token_out[1])
             
             optimizer.zero_grad()
